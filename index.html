@@ -58,7 +58,14 @@
   <div id="score"></div>
   <button id="nextBtn" onclick="nextQuestion()">Question suivante</button>
   <button id="restartBtn" onclick="startSession()">🔁 Nouvelle session</button> <button onclick="resetMemory()" title="Réinitialiser toute la mémoire" style="background:none; border:none; font-size:22px;">🔄</button>
-
+  
+<div id="resultPage" style="display:none; margin-top: 30px;">
+  <h2>🎉 Fin de la session !</h2>
+  <p id="finalScore"></p>
+  <p id="finalFeedback"></p>
+  <button onclick="startSession()">🔁 Rejouer une session</button>
+</div>
+  
   <script>
     const fullQuestions = [
       {
@@ -17334,21 +17341,41 @@ taux d'imposition marginal du foyer fiscal`,
     }
 
     function nextQuestion() {
-      resetButtons();
-      if (sessionQuestions.length === 0) {
-        document.getElementById("question").innerText = "Session terminée !";
-        document.getElementById("nextBtn").style.display = "none";
-        document.getElementById("restartBtn").style.display = "block";
-        return;
-      }
-      currentQuestion = sessionQuestions.shift();
-      document.getElementById("question").innerText = currentQuestion.question;
-      document.getElementById("btnA").innerText = "A. " + currentQuestion.A;
-      document.getElementById("btnB").innerText = "B. " + currentQuestion.B;
-      document.getElementById("btnC").innerText = "C. " + currentQuestion.C;
-      document.getElementById("feedback").innerText = "";
-      document.getElementById("nextBtn").style.display = "none";
-    }
+  resetButtons();
+  if (sessionQuestions.length === 0) {
+    document.getElementById("question").style.display = "none";
+    document.querySelector(".choices").style.display = "none";
+    document.getElementById("feedback").style.display = "none";
+    document.getElementById("nextBtn").style.display = "none";
+    document.getElementById("restartBtn").style.display = "none";
+
+    // Afficher la page de résultat
+    const percentage = Math.round((correct / total) * 100);
+    document.getElementById("finalScore").innerText = `Tu as eu ${correct} bonnes réponses sur ${total} (${percentage}%)`;
+
+    let message = "";
+    if (percentage === 100) message = "Parfait ! ✅";
+    else if (percentage >= 80) message = "Très bien joué 💪";
+    else if (percentage >= 50) message = "Pas mal, continue 💡";
+    else message = "Il faut encore t'entraîner 📚";
+
+    document.getElementById("finalFeedback").innerText = message;
+    document.getElementById("resultPage").style.display = "block";
+
+    return;
+  }
+  // Suite normale d'affichage des questions
+  currentQuestion = sessionQuestions.shift();
+  document.getElementById("question").style.display = "block";
+  document.querySelector(".choices").style.display = "block";
+  document.getElementById("feedback").style.display = "block";
+  document.getElementById("question").innerText = currentQuestion.question;
+  document.getElementById("btnA").innerText = "A. " + currentQuestion.A;
+  document.getElementById("btnB").innerText = "B. " + currentQuestion.B;
+  document.getElementById("btnC").innerText = "C. " + currentQuestion.C;
+  document.getElementById("feedback").innerText = "";
+  document.getElementById("nextBtn").style.display = "none";
+}
 
     function checkAnswer(choice) {
       total++;
