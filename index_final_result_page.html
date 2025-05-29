@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QCM AMF</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background-color: #fff;
+      color: #000;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .dark-mode {
+      background-color: #121212;
+      color: #ffffff;
+    }
+    .question {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .choices button {
+      display: block;
+      margin: 10px 0;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .correct { background-color: #c8e6c9; }
+    .incorrect { background-color: #ffcdd2; }
+    #feedback { font-weight: bold; margin-top: 20px; }
+    #nextBtn, #restartBtn, #toggleTheme {
+      margin-top: 20px;
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #score { margin-top: 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>QCM Entraînement AMF</h1>
+  <button id="toggleTheme" onclick="toggleTheme()" style="background:none; border:none; font-size:22px; float:right;">🌙</button>
+  <div class="question" id="question"></div>
+  <div class="choices">
+    <button onclick="checkAnswer('A')" id="btnA"></button>
+    <button onclick="checkAnswer('B')" id="btnB"></button>
+    <button onclick="checkAnswer('C')" id="btnC"></button>
+  </div>
+  <div id="feedback"></div>
+  <div id="score"></div>
+  <button id="nextBtn" onclick="nextQuestion()">Question suivante</button>
+  <button id="restartBtn" onclick="startSession()">🔁 Nouvelle session</button>
+  <button onclick="resetMemory()" title="Réinitialiser toute la mémoire" style="background:none; border:none; font-size:22px;">🔄</button>
+
+  <div id="resultPage" style="display:none; margin-top: 30px;">
+    <h2>🎉 Fin de la session !</h2>
+    <p id="finalScore"></p>
+    <p id="finalFeedback"></p>
+    <button onclick="startSession()">🔁 Rejouer une session</button>
+  </div>
+
+  <script>
+    const fullQuestions = [
+      {
+        question: "Exemple de question ?",
+        A: "Réponse A",
+        B: "Réponse B",
+        C: "Réponse C",
+        answer: "A",
+        status: 'unseen'
+      }
+    ];
+
+    let sessionQuestions = [];
+    let total = 0, correct = 0;
+    let currentQuestion = null;
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    function resetMemory() {
+      fullQuestions.forEach(q => q.status = 'unseen');
+      alert("Mémoire réinitialisée !");
+      startSession();
+    }
+
+    function startSession() {
+      total = 0;
+      correct = 0;
+      sessionQuestions = fullQuestions.filter(q => q.status !== 'correct');
+      if (sessionQuestions.length === 0) {
+        fullQuestions.forEach(q => q.status = 'unseen');
+        sessionQuestions = [...fullQuestions];
+      }
+      shuffleArray(sessionQuestions);
+      sessionQuestions = sessionQuestions.slice(0, 20);
+      document.getElementById("resultPage").style.display = "none";
+      nextQuestion();
+      updateScore();
+      document.getElementById("restartBtn").style.display = "none";
+    }
+
+    function nextQuestion() {
+      resetButtons();
+      if (sessionQuestions.length === 0) {
+        document.getElementById("question").style.display = "none";
+        document.querySelector(".choices").style.display = "none";
+        document.getElementById("feedback").style.display = "none";
+        document.getElementById("nextBtn").style.display = "none";
+        document.getElementById("restartBtn").style.display = "none";
+
+        const percentage = Math.round((correct / total) * 100);
+        document.getElementById("finalScore").innerText = `Tu as eu ${correct} bonnes réponses sur ${total} (${percentage}%)`;
+
+        let message = "";
+        if (percentage === 100) message = "Parfait ! ✅";
+        else if (percentage >= 80) message = "Très bien joué 💪";
+        else if (percentage >= 50) message = "Pas mal, continue 💡";
+        else message = "Il faut encore t'entraîner 📚";
+
+        document.getElementById("finalFeedback").innerText = message;
+        document.getElementById("resultPage").style.display = "block";
+
+        return;
+      }
+      currentQuestion = sessionQuestions.shift();
+      document.getElementById("question").style.display = "block";
+      document.querySelector(".choices").style.display = "block";
+      document.getElementById("feedback").style.display = "block";
+      document.getElementById("question").innerText = currentQuestion.question;
+      document.getElementById("btnA").innerText = "A. " + currentQuestion.A;
+      document.getElementById("btnB").innerText = "B. " + currentQuestion.B;
+      document.getElementById("btnC").innerText = "C. " + currentQuestion.C;
+      document.getElementById("feedback").innerText = "";
+      document.getElementById("nextBtn").style.display = "none";
+    }
+
+    function checkAnswer(choice) {
+      total++;
+      const isCorrect = choice === currentQuestion.answer;
+      if (isCorrect) {
+        correct++;
+        currentQuestion.status = 'correct';
+        document.getElementById("feedback").innerText = "Bonne réponse ✅";
+        document.getElementById("btn" + choice).classList.add("correct");
+      } else {
+        currentQuestion.status = 'incorrect';
+        document.getElementById("feedback").innerText = "Mauvaise réponse ❌";
+        document.getElementById("btn" + choice).classList.add("incorrect");
+      }
+      document.getElementById("nextBtn").style.display = "block";
+      updateScore();
+    }
+
+    function resetButtons() {
+      ["A", "B", "C"].forEach(id => {
+        const btn = document.getElementById("btn" + id);
+        btn.classList.remove("correct", "incorrect");
+      });
+    }
+
+    function updateScore() {
+      document.getElementById("score").innerText = `Score : ${correct} / ${total}`;
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    startSession();
+  </script>
+</body>
+</html>
